@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alkane – Selbsttest</title>
+<style>
+  :root { --petrol:#12465C; --petrol2:#1d6a86; --light:#E9F2F5; --red:#D9482B; --green:#2E8B57; --ink:#1B2A30; --muted:#6b7c83; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family: "Segoe UI", Calibri, Arial, sans-serif; color:var(--ink); background:#f6f9fa; }
+  header { background:var(--petrol); color:#fff; padding:18px 20px 14px; }
+  header h1 { margin:0; font-size:1.5rem; }
+  header p { margin:4px 0 0; opacity:.85; font-size:.95rem; }
+  main { max-width:860px; margin:0 auto; padding:18px 16px 40px; }
+  .tabs { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+  .tab { border:2px solid var(--petrol); background:#fff; color:var(--petrol); padding:10px 16px; border-radius:999px; font-weight:700; cursor:pointer; font-size:1rem; }
+  .tab.active { background:var(--petrol); color:#fff; }
+  .card { background:#fff; border-radius:14px; padding:18px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  .bar { display:flex; justify-content:space-between; align-items:center; font-size:.95rem; color:var(--muted); margin-bottom:10px; }
+  .progress { height:8px; background:var(--light); border-radius:99px; overflow:hidden; margin-bottom:14px; }
+  .progress > div { height:100%; background:var(--petrol2); width:0; transition:width .3s; }
+  .q { font-size:1.15rem; font-weight:700; margin:4px 0 12px; }
+  .mol { background:var(--light); border-radius:12px; padding:10px; display:flex; justify-content:center; overflow-x:auto; }
+  .mol svg { max-width:100%; height:auto; }
+  .row { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; }
+  input[type=text] { flex:1 1 260px; font-size:1.1rem; padding:11px 12px; border:2px solid #c9d6db; border-radius:10px; }
+  input[type=text]:focus { outline:none; border-color:var(--petrol2); }
+  button.main { background:var(--petrol); color:#fff; border:none; border-radius:10px; padding:11px 18px; font-size:1rem; font-weight:700; cursor:pointer; }
+  button.ghost { background:#fff; color:var(--petrol); border:2px solid var(--petrol); border-radius:10px; padding:9px 14px; font-size:1rem; font-weight:700; cursor:pointer; }
+  button:disabled { opacity:.5; cursor:default; }
+  .opts { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px; }
+  .opt { border:3px solid transparent; background:var(--light); border-radius:12px; padding:8px; cursor:pointer; display:flex; flex-direction:column; align-items:center; }
+  .opt:hover { border-color:#9fbfcb; }
+  .opt { min-width:0; overflow:hidden; }
+  .opt svg { width:100%; height:auto; max-height:200px; }
+  .opt .lbl { font-weight:700; color:var(--petrol); align-self:flex-start; }
+  .opt.right { border-color:var(--green); background:#e3f3ea; }
+  .opt.wrong { border-color:var(--red); background:#fbe3dd; }
+  .fb { margin-top:14px; padding:12px 14px; border-radius:10px; font-size:1rem; display:none; }
+  .fb.ok { display:block; background:#e3f3ea; color:#1d5e3a; }
+  .fb.no { display:block; background:#fbe3dd; color:#8a2a17; }
+  .hint { margin-top:10px; color:var(--muted); font-size:.95rem; display:none; }
+  .end { text-align:center; }
+  .end .big { font-size:3rem; font-weight:800; color:var(--petrol); margin:8px 0; }
+  details { margin-top:18px; background:#fff; border-radius:14px; padding:12px 16px; }
+  summary { font-weight:700; cursor:pointer; color:var(--petrol); }
+  details ol { padding-left:20px; line-height:1.5; }
+  .small { font-size:.9rem; color:var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <h1>Alkane – Selbsttest</h1>
+  <p>Teste deinen Lernstand für den KLN. Jede Runde hat 8 Aufgaben.</p>
+</header>
+<main>
+  <div class="tabs">
+    <button class="tab active" data-mode="f2n">Formel → Name</button>
+    <button class="tab" data-mode="n2f">Name → Formel</button>
+  </div>
+  <div class="card" id="app"></div>
+  <details>
+    <summary>Die IUPAC-Regeln zum Nachlesen</summary>
+    <ol>
+      <li><b>Längste Kette:</b> Finde die längste zusammenhängende Kette und benenne sie. Gibt es mehrere gleich lange Ketten, wähle die Kette mit den meisten Substituenten.</li>
+      <li><b>Nummerierung:</b> Die Seitenketten bekommen möglichst kleine Zahlen. Der erste Unterschied entscheidet.</li>
+      <li><b>Alkylgruppen:</b> Benenne die Seitenketten und ordne sie alphabetisch.</li>
+      <li><b>Gleiche Substituenten:</b> di- = 2, tri- = 3, tetra- = 4. Diese Vorsilben zählen beim Alphabet nicht.</li>
+      <li><b>Positionen:</b> Gib vor jeder Seitenkette die Nummer des C-Atoms an.</li>
+    </ol>
+    <p class="small">Schreibweise: Zahlen mit Komma trennen, zwischen Zahl und Wort ein Bindestrich, zum Beispiel 3-Ethyl-2,4-dimethylpentan.</p>
+  </details>
+</main>
+<script>
+const ITEMS = [{"name": "Butan", "f": "C4H10", "n": [[0, 0], [1, 0], [2, 0], [3, 0]], "b": [[0, 1], [1, 2], [2, 3]], "hint": ""}, {"name": "2-Methylpropan", "f": "C4H10", "n": [[0, 0], [1, 0], [2, 0], [1, 1]], "b": [[0, 1], [1, 2], [1, 3]], "hint": ""}, {"name": "Pentan", "f": "C5H12", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0]], "b": [[0, 1], [1, 2], [2, 3], [3, 4]], "hint": ""}, {"name": "2-Methylbutan", "f": "C5H12", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [1, 1]], "b": [[0, 1], [1, 2], [2, 3], [1, 4]], "hint": ""}, {"name": "2,2-Dimethylpropan", "f": "C5H12", "n": [[0, 0], [1, 0], [2, 0], [1, 1], [1, -1]], "b": [[0, 1], [1, 2], [1, 3], [1, 4]], "hint": ""}, {"name": "Hexan", "f": "C6H14", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5]], "hint": ""}, {"name": "2-Methylpentan", "f": "C6H14", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5]], "hint": ""}, {"name": "3-Methylpentan", "f": "C6H14", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5]], "hint": ""}, {"name": "2,2-Dimethylbutan", "f": "C6H14", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [1, 1], [1, -1]], "b": [[0, 1], [1, 2], [2, 3], [1, 4], [1, 5]], "hint": ""}, {"name": "2,3-Dimethylbutan", "f": "C6H14", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [1, 1], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [1, 4], [2, 5]], "hint": ""}, {"name": "2-Methylhexan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6]], "hint": ""}, {"name": "3-Methylhexan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6]], "hint": ""}, {"name": "3-Ethylpentan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [2, 1], [2, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [5, 6]], "hint": ""}, {"name": "2,3-Dimethylpentan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [2, 6]], "hint": ""}, {"name": "2,4-Dimethylpentan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [3, 6]], "hint": ""}, {"name": "2,2-Dimethylpentan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [1, -1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [1, 6]], "hint": ""}, {"name": "3,3-Dimethylpentan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [2, 1], [2, -1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [2, 6]], "hint": ""}, {"name": "2,2,3-Trimethylbutan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [1, 1], [1, -1], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [1, 4], [1, 5], [2, 6]], "hint": ""}, {"name": "3-Ethylhexan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [2, 1], [2, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6], [6, 7]], "hint": ""}, {"name": "2,3-Dimethylhexan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6], [2, 7]], "hint": ""}, {"name": "2,5-Dimethylhexan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1], [4, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6], [4, 7]], "hint": ""}, {"name": "2,2,4-Trimethylpentan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [1, -1], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [1, 6], [3, 7]], "hint": ""}, {"name": "3-Ethyl-3-methylpentan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [2, 1], [2, -1], [2, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [2, 5], [2, 6], [6, 7]], "hint": ""}, {"name": "3-Ethyl-2-methylpentan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [2, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [2, 6], [6, 7]], "hint": ""}, {"name": "3-Methylheptan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [2, 7]], "hint": ""}, {"name": "4-Methylheptan", "f": "C8H18", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [3, 7]], "hint": ""}, {"name": "2-Methyloctan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [1, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [1, 8]], "hint": ""}, {"name": "3-Methyloctan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [2, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [2, 8]], "hint": ""}, {"name": "4-Methyloctan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [3, 8]], "hint": ""}, {"name": "4-Ethyl-2-methylhexan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1], [3, 1], [3, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6], [3, 7], [7, 8]], "hint": ""}, {"name": "3-Ethyl-2-methylhexan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1], [2, 1], [2, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6], [2, 7], [7, 8]], "hint": ""}, {"name": "3-Ethyl-2,4-dimethylpentan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [2, 2], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [2, 6], [6, 7], [3, 8]], "hint": ""}, {"name": "3-Ethyl-2,3-dimethylpentan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [2, -1], [2, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [2, 6], [2, 7], [7, 8]], "hint": ""}, {"name": "3-Ethyl-2,2-dimethylpentan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [1, -1], [2, 1], [2, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [1, 6], [2, 7], [7, 8]], "hint": ""}, {"name": "2,4-Dimethylheptan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [1, 1], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [1, 7], [3, 8]], "hint": ""}, {"name": "3-Ethyl-2,5-dimethylhexan", "f": "C10H22", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1], [2, 1], [2, 2], [4, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6], [2, 7], [7, 8], [4, 9]], "hint": ""}, {"name": "2,3,4-Trimethylheptan", "f": "C10H22", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [1, 1], [2, 1], [3, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [1, 7], [2, 8], [3, 9]], "hint": ""}, {"name": "4-Ethyl-3,3-dimethylheptan", "f": "C11H24", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [2, 1], [2, -1], [3, 1], [3, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [2, 7], [2, 8], [3, 9], [9, 10]], "hint": ""}, {"name": "4-Propylheptan", "f": "C10H22", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [3, 1], [3, 2], [3, 3]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [3, 7], [7, 8], [8, 9]], "hint": ""}, {"name": "4-Ethyloctan", "f": "C10H22", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [3, 1], [3, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [3, 8], [8, 9]], "hint": ""}, {"name": "3,4-Diethylhexan", "f": "C10H22", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [2, 1], [2, 2], [3, 1], [3, 2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [2, 6], [6, 7], [3, 8], [8, 9]], "hint": ""}, {"name": "2,5-Dimethylnonan", "f": "C11H24", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [6, 0], [7, 0], [8, 0], [1, 1], [4, 1]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 8], [1, 9], [4, 10]], "hint": ""}, {"name": "3-Ethyl-2-methylhexan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [1, 1], [2, -1], [2, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [1, 6], [2, 7], [7, 8]], "hint": "Es gibt zwei gleich lange Ketten. Denk an Regel 1 ii."}, {"name": "3-Ethyl-2,4-dimethylpentan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [3, 1], [2, -1], [1, -1], [2, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [3, 5], [2, 6], [6, 7], [6, 8]], "hint": "Es gibt zwei gleich lange Ketten. Denk an Regel 1 ii."}, {"name": "3-Ethyl-2,5-dimethylhexan", "f": "C10H22", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [5, 0], [4, 1], [2, -1], [1, -1], [2, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [4, 6], [2, 7], [7, 8], [7, 9]], "hint": "Es gibt zwei gleich lange Ketten. Denk an Regel 1 ii."}, {"name": "3-Methylhexan", "f": "C7H16", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, -1], [1, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [5, 6]], "hint": "Achtung: Die längste Kette ist hier nicht waagerecht gezeichnet."}, {"name": "3-Ethyl-2,3-dimethylpentan", "f": "C9H20", "n": [[0, 0], [1, 0], [2, 0], [3, 0], [4, 0], [1, 1], [2, 1], [2, -1], [2, -2]], "b": [[0, 1], [1, 2], [2, 3], [3, 4], [1, 5], [2, 6], [2, 7], [7, 8]], "hint": "Es gibt mehrere gleich lange Ketten. Denk an Regel 1 ii."}];
+const ROUND = 8;
+let mode = "f2n", queue = [], idx = 0, score = 0, answered = false;
+
+function shuffle(a) { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function norm(s) { return s.toLowerCase().replace(/[\s ]/g, "").replace(/[‐-―−]/g, "-").replace(/okt/g, "oct"); }
+function fmt(f) { return f.replace(/(\d+)/g, "<sub>$1</sub>"); }
+
+function svg(it) {
+  const deg = it.n.map(() => 0); it.b.forEach(([a, b]) => { deg[a]++; deg[b]++; });
+  const lab = [["CH", "4"], ["CH", "3"], ["CH", "2"], ["CH", ""], ["C", ""]];
+  const SX = 70, SY = 52;
+  const xs = it.n.map(p => p[0]), ys = it.n.map(p => -p[1]);
+  const minx = Math.min(...xs), maxx = Math.max(...xs), miny = Math.min(...ys), maxy = Math.max(...ys);
+  const W = (maxx - minx) * SX + 90, H = (maxy - miny) * SY + 50;
+  const X = i => (it.n[i][0] - minx) * SX + 45, Y = i => (-it.n[i][1] - miny) * SY + 25;
+  let s = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" style="max-width:${W}px" font-family="Arial, sans-serif" font-size="18">`;
+  it.b.forEach(([a, b]) => {
+    let x1 = X(a), y1 = Y(a), x2 = X(b), y2 = Y(b);
+    if (y1 === y2) { const d = x2 > x1 ? 1 : -1; x1 += d * 25; x2 -= d * 25; } else { const d = y2 > y1 ? 1 : -1; y1 += d * 13; y2 -= d * 13; }
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#1B2A30" stroke-width="2"/>`;
+  });
+  it.n.forEach((p, i) => { const [t, sub] = lab[deg[i]];
+    s += `<text x="${X(i)}" y="${Y(i) + 6}" text-anchor="middle" fill="#1B2A30">${t}${sub ? `<tspan font-size="12" dy="5">${sub}</tspan>` : ""}</text>`; });
+  return s + "</svg>";
+}
+
+function start() {
+  const pool = mode === "f2n" ? ITEMS.filter(i => i.n.length >= 4) : ITEMS.filter(i => !i.hint && i.n.length >= 5);
+  // Fallen-Aufgaben bevorzugt einmischen
+  const tricky = shuffle(pool.filter(i => i.hint)).slice(0, mode === "f2n" ? 3 : 0);
+  const rest = shuffle(pool.filter(i => !tricky.includes(i)));
+  const seen = new Set(tricky.map(t => t.name));
+  queue = tricky.slice();
+  for (const r of rest) { if (queue.length >= ROUND) break; if (!seen.has(r.name)) { queue.push(r); seen.add(r.name); } }
+  queue = shuffle(queue); idx = 0; score = 0; render();
+}
+
+function header() {
+  return `<div class="bar"><span>Aufgabe ${idx + 1} von ${queue.length}</span><span>Punkte: ${score}</span></div>
+          <div class="progress"><div style="width:${idx / queue.length * 100}%"></div></div>`;
+}
+
+function render() {
+  answered = false;
+  const app = document.getElementById("app");
+  if (idx >= queue.length) return renderEnd();
+  const it = queue[idx];
+  if (mode === "f2n") {
+    app.innerHTML = header() + `<div class="q">Wie heißt dieses Alkan nach IUPAC?</div>
+      <div class="mol">${svg(it)}</div>
+      <div class="row"><input type="text" id="ans" placeholder="zum Beispiel 3-Ethyl-2-methylhexan" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <button class="main" id="check">Prüfen</button><button class="ghost" id="tip">Tipp</button></div>
+      <div class="hint" id="hint"></div><div class="fb" id="fb"></div>
+      <div class="row"><button class="main" id="next" style="display:none">Weiter</button></div>`;
+    const ans = document.getElementById("ans"); ans.focus();
+    ans.addEventListener("keydown", e => { if (e.key === "Enter") { answered ? next() : check(); } });
+    document.getElementById("check").onclick = check;
+    document.getElementById("tip").onclick = () => { const h = document.getElementById("hint"); h.style.display = "block";
+      h.textContent = it.hint || "Suche zuerst die längste Kette. Nummeriere dann so, dass die Seitenketten kleine Zahlen bekommen."; };
+    document.getElementById("next").onclick = next;
+    function check() {
+      if (answered) return; const v = ans.value.trim(); if (!v) return; answered = true;
+      const ok = norm(v) === norm(it.name); if (ok) score++;
+      const fb = document.getElementById("fb");
+      fb.className = "fb " + (ok ? "ok" : "no");
+      fb.innerHTML = ok ? `Richtig! ${it.name} hat die Summenformel ${fmt(it.f)}.` :
+        `Leider falsch. Richtig ist <b>${it.name}</b> (${fmt(it.f)}).` + (it.hint ? `<br>${it.hint}` : "");
+      document.getElementById("check").disabled = true; ans.disabled = true;
+      document.getElementById("next").style.display = "inline-block"; document.getElementById("next").focus();
+    }
+  } else {
+    let same = shuffle(ITEMS.filter(i => i.f === it.f && i.name !== it.name && !i.hint));
+    const names = new Set([it.name]); const distract = [];
+    for (const d of same) { if (!names.has(d.name)) { distract.push(d); names.add(d.name); } if (distract.length === 3) break; }
+    if (distract.length < 3) {
+      const near = shuffle(ITEMS.filter(i => !names.has(i.name) && !i.hint && Math.abs(i.n.length - it.n.length) <= 1));
+      for (const d of near) { if (!names.has(d.name)) { distract.push(d); names.add(d.name); } if (distract.length === 3) break; }
+    }
+    const opts = shuffle([it, ...distract]);
+    app.innerHTML = header() + `<div class="q">Welche Strukturformel gehört zu <span style="color:var(--red)">${it.name}</span>?</div>
+      <div class="opts">${opts.map((o, k) => `<div class="opt" data-k="${k}"><span class="lbl">${"ABCD"[k]}</span>${svg(o)}</div>`).join("")}</div>
+      <div class="fb" id="fb"></div><div class="row"><button class="main" id="next" style="display:none">Weiter</button></div>`;
+    document.querySelectorAll(".opt").forEach(el => el.onclick = () => {
+      if (answered) return; answered = true;
+      const o = opts[+el.dataset.k], ok = o.name === it.name; if (ok) score++;
+      document.querySelectorAll(".opt").forEach(e2 => { if (opts[+e2.dataset.k].name === it.name) e2.classList.add("right"); });
+      if (!ok) el.classList.add("wrong");
+      const fb = document.getElementById("fb"); fb.className = "fb " + (ok ? "ok" : "no");
+      fb.innerHTML = ok ? `Richtig! Summenformel: ${fmt(it.f)}.` :
+        `Leider falsch. Deine Wahl ist ${o.name} (${fmt(o.f)}).` + (o.f === it.f ? " Beide Moleküle haben die gleiche Summenformel. Sie sind Isomere." : "");
+      const nb = document.getElementById("next"); nb.style.display = "inline-block"; nb.onclick = next; nb.focus();
+    });
+  }
+}
+function next() { idx++; render(); }
+function renderEnd() {
+  const p = Math.round(score / queue.length * 100);
+  const msg = p >= 85 ? "Sehr gut! Du bist fit für den KLN." : p >= 60 ? "Gut! Übe die Aufgaben, die noch nicht geklappt haben." : "Schau dir die Regeln unten noch einmal an und versuche es erneut.";
+  document.getElementById("app").innerHTML = `<div class="end"><div>Ergebnis</div><div class="big">${score} / ${queue.length}</div><p>${msg}</p>
+    <button class="main" id="again">Neue Runde</button></div>`;
+  document.getElementById("again").onclick = start;
+}
+document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.remove("active")); t.classList.add("active"); mode = t.dataset.mode; start(); });
+start();
+</script>
+</body>
+</html>
